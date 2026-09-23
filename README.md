@@ -78,9 +78,9 @@ Flask の開発用サーバーで動かしているので、手元で使う前�
 from calc import Calculator, CalcError
 
 c = Calculator()
-c.execute("x = 3")   # -> 3
-c.execute("x * 2")   # -> 6
-c.variables          # -> {"x": 3}
+c.execute("x = 3")  # -> 3
+c.execute("x * 2")  # -> 6
+c.variables  # -> {"x": 3}
 ```
 
 誤りがあると `CalcError` の子クラス（`LexError`・`ParseError`・`EvalError`）を送出します。どれも `message` と `position` を持ちます。
