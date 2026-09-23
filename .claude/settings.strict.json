@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "uv run ruff format --quiet . && uv run ruff check --fix --quiet . || true" }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "uv run python .claude/hooks/protect_tests.py" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "uv run pytest -q > /dev/null 2>&1 || { echo 'テストが失敗しています。すべて通してから終了してください。' >&2; exit 2; }" }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+[project]
+name = "calc-lab"
+version = "0.1.0"
+description = "Claude Code で体験する最先端の AI コーディング（学習用）"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest", "ruff", "mcp[cli]", "claude-agent-sdk"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
