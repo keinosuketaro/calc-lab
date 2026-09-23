@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "text-tools": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "tools/text_tools_server.py"
+      ],
+      "env": {}
+    },
+    "time": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "mcp-server-time",
+        "--local-timezone",
+        "Asia/Tokyo"
+      ],
+      "env": {}
+    },
+    "code-metrics": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "tools/code_metrics_server.py"
+      ],
+      "env": {}
+    }
+  }
+}
