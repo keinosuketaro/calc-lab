@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>calc-lab 電卓</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%2300bbdd'/%3E%3Cpath d='M16 9v14M9 16h14' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&family=Zen+Kaku+Gothic+Antique:wght@300;400;500&display=swap" rel="stylesheet">
@@ -427,7 +428,8 @@ const expr = $("expr");
 const session = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now());
 const history = [];      // { line, ok, text }
 let historyCursor = null; // ↑↓ で呼び出している履歴の位置
-let busy = false;
+// 計算は送った順に1つずつ行う（前の応答を待たずに Enter を押しても、式を捨てない）
+let queue = Promise.resolve();
 
 // ---- サーバーとのやりとり ----
 async function post(path, body) {
@@ -441,18 +443,21 @@ async function post(path, body) {
   return data;
 }
 
-async function run() {
+function run() {
   const line = expr.value;
-  if (busy) return;
   if (line.trim() === "") { expr.focus(); return; }
-  busy = true;
-  $("run").disabled = true;
+  historyCursor = null;
+  queue = queue.then(() => execute(line));
+}
+
+async function execute(line) {
   try {
     const data = await post("/api/execute", { line });
     if (data.ok) {
       showResult(line, data.result);
       addHistory({ line, ok: true, text: data.result });
-      expr.value = "";
+      // 応答を待つあいだに次の式を入力していたら、それは消さない
+      if (expr.value === line) expr.value = "";
     } else {
       showError(line, data);
       addHistory({ line, ok: false, text: `${data.kind}: ${data.message}` });
@@ -461,9 +466,6 @@ async function run() {
   } catch (err) {
     showError(line, { kind: "通信エラー", message: err.message, position: null });
   } finally {
-    busy = false;
-    $("run").disabled = false;
-    historyCursor = null;
     expr.focus();
   }
 }
@@ -491,7 +493,7 @@ function showError(line, { kind, message, position }) {
     const mark = document.createElement("mark");
     mark.textContent = line.charAt(position) || " ";
     pre.append(line.slice(0, position), mark, line.slice(position + 1));
-    expr.setSelectionRange(position, Math.min(position + 1, line.length));
+    if (expr.value === line) expr.setSelectionRange(position, Math.min(position + 1, line.length));
   }
   $("error").classList.add("show");
   $("input-row").classList.add("has-error");
