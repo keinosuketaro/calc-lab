@@ -9,8 +9,14 @@ import sys
 from pathlib import Path
 
 from claude_agent_sdk import (
-    AgentDefinition, AssistantMessage, ClaudeAgentOptions, HookMatcher,
-    ResultMessage, TextBlock, ToolUseBlock, query,
+    AgentDefinition,
+    AssistantMessage,
+    ClaudeAgentOptions,
+    HookMatcher,
+    ResultMessage,
+    TextBlock,
+    ToolUseBlock,
+    query,
 )
 
 PROJECT = Path(__file__).resolve().parent.parent

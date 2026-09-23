@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
-from text_tools_server import to_snake_case, word_count  # noqa: E402
+from text_tools_server import to_snake_case, word_count
 
 
 def test_snake_case():
