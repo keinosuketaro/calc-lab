@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>calc-lab 電卓</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&family=Zen+Kaku+Gothic+Antique:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eeeeee;
+    --text: #443322;
+    --muted: #8a7f74;
+    --accent: #00bbdd;
+    --accent-hover: #0090aa;
+    --accent-soft: #00bbdd22;
+    --glass: #ffffff88;
+    --white: #ffffff;
+    --line: #dddddd;
+    --danger: #c8442f;
+    --danger-soft: #c8442f14;
+    --font: "Montserrat", "Zen Kaku Gothic Antique", sans-serif;
+    --mono: "Montserrat", "Zen Kaku Gothic Antique", ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { font-size: 100%; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    font-family: var(--font);
+    font-weight: 300;
+    line-height: 1.8;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input { font: inherit; color: inherit; }
+  code { font-family: var(--mono); font-weight: 400; }
+
+  /* ヘッダー（参考サイトと同じ、半透明の白で上に固定） */
+  .site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0 4%;
+    background: var(--glass);
+    backdrop-filter: blur(6px);
+    z-index: 10;
+  }
+  .main-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 36px;
+    margin: 0;
+    padding: 20px 0;
+    list-style: none;
+    font-size: 1.1rem;
+  }
+  .main-nav a { color: var(--text); text-decoration: none; transition: color 0.2s; }
+  .main-nav a:hover, .main-nav a[aria-current="page"] { color: var(--accent); }
+
+  .app {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 120px 16px 64px;
+  }
+  .hero { text-align: center; margin-bottom: 40px; }
+  .page-title { font-size: 3rem; font-weight: 300; margin: 0; letter-spacing: 0.02em; line-height: 1.3; }
+  .hero p { margin: 12px 0 0; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .card {
+    background: var(--glass);
+    border: 2px solid var(--white);
+    border-radius: 5px;
+  }
+
+  /* 電卓本体 */
+  .calc { padding: 20px; }
+  .display {
+    background: var(--white);
+    border-radius: 5px;
+    padding: 14px 18px 10px;
+    min-height: 136px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 2px;
+  }
+  .display .last {
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-align: right;
+    min-height: 1.6em;
+    overflow-wrap: anywhere;
+  }
+  .display .result {
+    font-family: "Montserrat", sans-serif;
+    font-size: 2.75rem;
+    font-weight: 300;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .display .result.long { font-size: 1.5rem; }
+  .display .result.very-long { font-size: 0.95rem; font-weight: 400; }
+  .display .result.flash { animation: flash 0.35s ease; }
+  @keyframes flash { from { opacity: 0.2; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .input-row {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--glass);
+    border: 2px solid var(--white);
+    border-radius: 5px;
+    padding: 4px 4px 4px 12px;
+    transition: border-color 0.2s;
+  }
+  .input-row:focus-within { border-color: var(--accent); }
+  .input-row.has-error { border-color: var(--danger); }
+  #expr {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 1.05rem;
+    padding: 8px 0;
+  }
+  #expr::placeholder { color: var(--muted); font-weight: 300; }
+
+  /* ボタン（参考サイトの design-btn / engineering-btn にそろえたピル形） */
+  .btn-fill {
+    border: 2px solid var(--accent);
+    background: var(--accent);
+    color: var(--white);
+    border-radius: 100vh;
+    padding: 6px 20px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .btn-fill:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-fill:disabled { opacity: 0.6; cursor: default; }
+  .btn-outline {
+    border: 2px solid var(--accent);
+    background: var(--white);
+    color: var(--accent);
+    border-radius: 100vh;
+    padding: 2px 14px;
+    font-size: 0.85rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-outline:hover { background: var(--accent-soft); }
+
+  .error {
+    display: none;
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--danger);
+    border-radius: 5px;
+    background: var(--danger-soft);
+    color: var(--danger);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+  .error.show { display: block; }
+  .error .kind { font-weight: 500; margin-right: 8px; }
+  .error pre {
+    margin: 4px 0 0;
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 1rem;
+    color: var(--text);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .error mark {
+    background: var(--danger);
+    color: var(--white);
+    border-radius: 3px;
+    padding: 0 2px;
+  }
+
+  .keys {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .key {
+    border: 2px solid var(--white);
+    border-radius: 100vh;
+    background: var(--white);
+    height: 52px;
+    font-family: "Montserrat", sans-serif;
+    font-size: 1.15rem;
+    font-weight: 300;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.06s;
+    user-select: none;
+  }
+  .key:hover { color: var(--accent); border-color: var(--accent); }
+  .key:active { transform: scale(0.96); }
+  .key.op { color: var(--accent); border-color: var(--accent); font-weight: 400; }
+  .key.op:hover { background: var(--accent-soft); }
+  .key.fn { background: transparent; border-color: var(--line); color: var(--muted); font-size: 1rem; }
+  .key.fn:hover { color: var(--accent); border-color: var(--accent); }
+  .key.eq {
+    grid-column: span 2;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--white);
+    font-family: var(--font);
+    font-weight: 400;
+    font-size: 1.05rem;
+  }
+  .key.eq:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--white); }
+  .key sup { font-size: 0.6em; }
+
+  .hint { color: var(--muted); font-size: 0.8rem; margin: 16px 4px 0; line-height: 2; }
+  kbd {
+    font-family: "Montserrat", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 400;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 6px;
+    background: var(--white);
+  }
+
+  /* 右側：変数と履歴 */
+  .side { display: grid; gap: 24px; }
+  .panel { padding: 18px 22px; }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .panel h2 {
+    font-family: "Montserrat", "Zen Kaku Gothic Antique", sans-serif;
+    font-size: 1.3rem;
+    font-weight: 300;
+    margin: 0;
+  }
+  .panel h2 small { font-size: 0.75rem; color: var(--muted); margin-left: 8px; }
+  .empty { color: var(--muted); font-size: 0.85rem; margin: 4px 0; }
+
+  .vars { display: flex; flex-wrap: wrap; gap: 8px; }
+  .var {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    max-width: 100%;
+    border: 2px solid var(--white);
+    background: var(--white);
+    border-radius: 100vh;
+    padding: 2px 14px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+  }
+  .var:hover { border-color: var(--accent); }
+  .var .name { color: var(--accent-hover); font-weight: 500; }
+  .var .value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+
+  .history { list-style: none; margin: 0; padding: 0; max-height: 440px; overflow-y: auto; }
+  .history li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 16px;
+    padding: 6px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+    transition: background 0.2s;
+  }
+  .history li:last-child { border-bottom: 0; }
+  .history li:hover { background: var(--white); }
+  .history .h-expr { font-family: var(--mono); font-weight: 400; overflow-wrap: anywhere; }
+  .history .h-res {
+    font-family: var(--mono);
+    font-weight: 500;
+    text-align: right;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .history .ok .h-res { color: var(--accent-hover); }
+  .history .ng .h-res { color: var(--danger); font-weight: 400; font-size: 0.8rem; white-space: normal; }
+
+  @media (max-width: 820px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 700px) {
+    .main-nav { font-size: 1rem; padding: 14px 0; gap: 28px; }
+    .app { padding-top: 96px; }
+    .page-title { font-size: 2.25rem; }
+  }
+  @media (max-width: 380px) {
+    .key { height: 46px; font-size: 1rem; }
+    .display .result { font-size: 2.1rem; }
+  }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <nav>
+    <ul class="main-nav">
+      <li><a href="#calc" aria-current="page">Calculator</a></li>
+      <li><a href="#variables">Variables</a></li>
+      <li><a href="#history-panel">History</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="app">
+  <div class="hero">
+    <h1 class="page-title">calc＋</h1>
+    <p>四則演算・べき乗・変数が使える、シンプルな数式電卓。</p>
+  </div>
+
+  <main class="layout">
+    <section class="card calc" id="calc" aria-label="電卓">
+      <div class="display">
+        <div class="last" id="last"></div>
+        <div class="result" id="result" aria-live="polite">0</div>
+      </div>
+
+      <div class="input-row" id="input-row">
+        <input id="expr" type="text" autocomplete="off" spellcheck="false"
+               placeholder="式を入力（例：x = 2 ** 10）" aria-label="式">
+        <button class="btn-fill" id="run" type="button">計算</button>
+      </div>
+
+      <div class="error" id="error" role="alert">
+        <span class="kind" id="error-kind"></span><span id="error-message"></span>
+        <pre id="error-source"></pre>
+      </div>
+
+      <div class="keys" id="keys">
+        <button class="key fn" data-action="clear" type="button">AC</button>
+        <button class="key fn" data-action="back" type="button" aria-label="1文字消す">⌫</button>
+        <button class="key op" data-insert="(" type="button">(</button>
+        <button class="key op" data-insert=")" type="button">)</button>
+        <button class="key op" data-insert=" / " type="button" aria-label="割る">÷</button>
+
+        <button class="key" data-insert="7" type="button">7</button>
+        <button class="key" data-insert="8" type="button">8</button>
+        <button class="key" data-insert="9" type="button">9</button>
+        <button class="key op" data-insert=" ** " type="button" aria-label="べき乗">x<sup>y</sup></button>
+        <button class="key op" data-insert=" * " type="button" aria-label="掛ける">×</button>
+
+        <button class="key" data-insert="4" type="button">4</button>
+        <button class="key" data-insert="5" type="button">5</button>
+        <button class="key" data-insert="6" type="button">6</button>
+        <button class="key op" data-insert=" = " type="button" aria-label="代入">＝</button>
+        <button class="key op" data-insert=" - " type="button" aria-label="引く">−</button>
+
+        <button class="key" data-insert="1" type="button">1</button>
+        <button class="key" data-insert="2" type="button">2</button>
+        <button class="key" data-insert="3" type="button">3</button>
+        <button class="key fn" data-insert="e" type="button" aria-label="指数表記の e">e</button>
+        <button class="key op" data-insert=" + " type="button" aria-label="足す">+</button>
+
+        <button class="key" data-insert="0" type="button">0</button>
+        <button class="key" data-insert="." type="button">.</button>
+        <button class="key fn" data-insert="x" type="button">x</button>
+        <button class="key eq" data-action="run" type="button">計算</button>
+      </div>
+
+      <p class="hint">
+        <kbd>Enter</kbd> 計算　<kbd>Esc</kbd> 入力を消す　<kbd>↑</kbd> <kbd>↓</kbd> 履歴を呼び出す<br>
+        「＝」は代入です（<code>x = 3</code>）。計算は「計算」ボタンか <kbd>Enter</kbd> で行います。
+      </p>
+    </section>
+
+    <div class="side">
+      <section class="card panel" id="variables" aria-label="変数">
+        <div class="panel-head">
+          <h2>Variables<small>変数</small></h2>
+          <button class="btn-outline" id="reset" type="button">すべて消す</button>
+        </div>
+        <div class="vars" id="vars"></div>
+        <p class="empty" id="vars-empty">まだありません。<code>rate = 0.08</code> のように代入すると、ここに並びます。</p>
+      </section>
+
+      <section class="card panel" id="history-panel" aria-label="履歴">
+        <div class="panel-head">
+          <h2>History<small>履歴</small></h2>
+          <button class="btn-outline" id="clear-history" type="button">履歴を消す</button>
+        </div>
+        <ul class="history" id="history"></ul>
+        <p class="empty" id="history-empty">計算した式がここに残ります。クリックすると入力欄に戻せます。</p>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+const expr = $("expr");
+const session = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now());
+const history = [];      // { line, ok, text }
+let historyCursor = null; // ↑↓ で呼び出している履歴の位置
+let busy = false;
+
+// ---- サーバーとのやりとり ----
+async function post(path, body) {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session, ...body }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `通信エラー（${res.status}）`);
+  return data;
+}
+
+async function run() {
+  const line = expr.value;
+  if (busy) return;
+  if (line.trim() === "") { expr.focus(); return; }
+  busy = true;
+  $("run").disabled = true;
+  try {
+    const data = await post("/api/execute", { line });
+    if (data.ok) {
+      showResult(line, data.result);
+      addHistory({ line, ok: true, text: data.result });
+      expr.value = "";
+    } else {
+      showError(line, data);
+      addHistory({ line, ok: false, text: `${data.kind}: ${data.message}` });
+    }
+    renderVars(data.variables);
+  } catch (err) {
+    showError(line, { kind: "通信エラー", message: err.message, position: null });
+  } finally {
+    busy = false;
+    $("run").disabled = false;
+    historyCursor = null;
+    expr.focus();
+  }
+}
+
+// ---- 表示 ----
+function showResult(line, text) {
+  hideError();
+  $("last").textContent = line.trim() + " =";
+  const el = $("result");
+  el.textContent = text;
+  el.classList.toggle("long", text.length > 14 && text.length <= 40);
+  el.classList.toggle("very-long", text.length > 40);
+  el.classList.remove("flash");
+  void el.offsetWidth; // アニメーションをやり直すため
+  el.classList.add("flash");
+}
+
+function showError(line, { kind, message, position }) {
+  $("error-kind").textContent = kind;
+  $("error-message").textContent = message;
+  const pre = $("error-source");
+  pre.replaceChildren();
+  if (position !== null && position !== undefined) {
+    // 誤りの位置の1文字に印を付ける。末尾の次を指すときは空白に印を付ける
+    const mark = document.createElement("mark");
+    mark.textContent = line.charAt(position) || " ";
+    pre.append(line.slice(0, position), mark, line.slice(position + 1));
+    expr.setSelectionRange(position, Math.min(position + 1, line.length));
+  }
+  $("error").classList.add("show");
+  $("input-row").classList.add("has-error");
+}
+
+function hideError() {
+  $("error").classList.remove("show");
+  $("input-row").classList.remove("has-error");
+}
+
+function renderVars(variables) {
+  const box = $("vars");
+  box.replaceChildren();
+  const names = Object.keys(variables || {});
+  for (const name of names) {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "var";
+    chip.title = `${name} = ${variables[name]}（クリックで入力）`;
+    const n = document.createElement("span");
+    n.className = "name";
+    n.textContent = name;
+    const v = document.createElement("span");
+    v.className = "value";
+    v.textContent = variables[name];
+    chip.append(n, "=", v);
+    chip.addEventListener("click", () => insert(name));
+    box.append(chip);
+  }
+  $("vars-empty").hidden = names.length > 0;
+}
+
+function addHistory(item) {
+  history.push(item);
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = $("history");
+  list.replaceChildren();
+  for (const item of [...history].reverse()) {
+    const li = document.createElement("li");
+    li.className = item.ok ? "ok" : "ng";
+    li.title = "クリックで入力欄に戻す";
+    const e = document.createElement("span");
+    e.className = "h-expr";
+    e.textContent = item.line;
+    const r = document.createElement("span");
+    r.className = "h-res";
+    r.textContent = item.text;
+    r.title = item.text;
+    li.append(e, r);
+    li.addEventListener("click", () => { expr.value = item.line; hideError(); expr.focus(); });
+    list.append(li);
+  }
+  $("history-empty").hidden = history.length > 0;
+}
+
+// ---- 入力 ----
+function insert(text) {
+  const start = expr.selectionStart ?? expr.value.length;
+  const end = expr.selectionEnd ?? expr.value.length;
+  expr.setRangeText(text, start, end, "end");
+  hideError();
+  expr.focus();
+}
+
+function backspace() {
+  const start = expr.selectionStart ?? expr.value.length;
+  const end = expr.selectionEnd ?? expr.value.length;
+  if (start !== end) {
+    expr.setRangeText("", start, end, "end");
+  } else if (start > 0) {
+    // 演算子キーで入れた「 + 」などは、前後の空白ごと消す
+    const before = expr.value.slice(0, start);
+    const m = before.match(/ (\*\*|[-+*\/=]) $/);
+    const n = m ? m[0].length : 1;
+    expr.setRangeText("", start - n, start, "end");
+  }
+  hideError();
+  expr.focus();
+}
+
+$("keys").addEventListener("click", (event) => {
+  const key = event.target.closest(".key");
+  if (!key) return;
+  if (key.dataset.insert !== undefined) insert(key.dataset.insert);
+  else if (key.dataset.action === "clear") { expr.value = ""; hideError(); expr.focus(); }
+  else if (key.dataset.action === "back") backspace();
+  else if (key.dataset.action === "run") run();
+});
+$("run").addEventListener("click", run);
+
+expr.addEventListener("keydown", (event) => {
+  if (event.isComposing) return;
+  if (event.key === "Enter") { event.preventDefault(); run(); }
+  else if (event.key === "Escape") { expr.value = ""; hideError(); }
+  else if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+    if (history.length === 0) return;
+    event.preventDefault();
+    const up = event.key === "ArrowUp";
+    if (historyCursor === null) historyCursor = up ? history.length - 1 : null;
+    else historyCursor += up ? -1 : 1;
+    if (historyCursor !== null) historyCursor = Math.max(0, historyCursor);
+    if (historyCursor === null || historyCursor >= history.length) {
+      historyCursor = null;
+      expr.value = "";
+    } else {
+      expr.value = history[historyCursor].line;
+    }
+  }
+});
+expr.addEventListener("input", () => { hideError(); historyCursor = null; });
+
+$("reset").addEventListener("click", async () => {
+  try {
+    const data = await post("/api/reset", {});
+    renderVars(data.variables);
+  } catch (err) {
+    showError("", { kind: "通信エラー", message: err.message, position: null });
+  }
+  expr.focus();
+});
+$("clear-history").addEventListener("click", () => { history.length = 0; renderHistory(); expr.focus(); });
+
+renderVars({});
+renderHistory();
+expr.focus();
+</script>
+</body>
+</html>

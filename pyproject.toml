@@ -3,7 +3,9 @@ name = "calc-lab"
 version = "0.1.0"
 description = "Claude Code で体験する最先端の AI コーディング（学習用）"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "flask>=3.1.3",
+]
 
 [build-system]
 requires = ["uv_build>=0.12,<0.13"]
