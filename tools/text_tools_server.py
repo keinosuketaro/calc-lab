@@ -1,4 +1,5 @@
 """Lab 7：自作の MCP サーバー。Claude Code に新しい道具を足す。"""
+
 try:  # MCP Python SDK v2
     from mcp.server import MCPServer
 except ImportError:  # v1 系
@@ -10,7 +11,11 @@ mcp = MCPServer("text-tools")
 @mcp.tool()
 def word_count(text: str) -> dict:
     """文字数・行数・空白区切りの語数を数える。"""
-    return {"chars": len(text), "lines": text.count("\n") + 1, "words": len(text.split())}
+    return {
+        "chars": len(text),
+        "lines": text.count("\n") + 1,
+        "words": len(text.split()),
+    }
 
 
 @mcp.tool()

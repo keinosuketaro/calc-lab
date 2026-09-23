@@ -1,4 +1,5 @@
 """キットに付属する MCP サーバーの単体テスト。"""
+
 import sys
 from pathlib import Path
 
