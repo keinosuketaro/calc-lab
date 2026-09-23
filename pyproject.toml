@@ -15,7 +15,13 @@ build-backend = "uv_build"
 module-name = "calc"
 
 [dependency-groups]
-dev = ["pytest", "ruff", "mcp[cli]", "claude-agent-sdk"]
+dev = [
+    "pytest",
+    "ruff",
+    "mcp[cli]",
+    "claude-agent-sdk",
+    "playwright>=1.63.0",
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

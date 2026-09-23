@@ -93,7 +93,9 @@ c.variables  # -> {"x": 3}
 | 整形とチェック | `uv run ruff format . && uv run ruff check .` |
 | 依存の追加 | `uv add <パッケージ>`（pip は使わない） |
 
-計算の部分（`lexer`・`parser`・`evaluator`）は標準ライブラリだけで作っています。外部ライブラリは Web GUI の Flask だけです。
+計算の部分（`lexer`・`parser`・`evaluator`）は標準ライブラリだけで作っています。外部ライブラリは Web GUI の Flask だけです（テスト用に pytest・Playwright など）。
+
+Web GUI の画面テスト（`tests/test_web_ui.py`）は、Playwright でブラウザを操作します。Google Chrome が入っていればそれを使います。ない場合は `uv run playwright install chromium` で Chromium を入れてください。ブラウザがなければ、画面テストはスキップされます。
 
 ## 構成
 

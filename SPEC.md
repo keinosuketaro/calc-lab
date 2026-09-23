@@ -351,6 +351,9 @@ Node = Number | Name | UnaryOp | BinOp | Assign
 | `tests/test_calc.py` | `Calculator` | 文字列 | 9.1〜9.3、9.6 の表（受け入れテスト） |
 | `tests/test_cli.py` | `main` と `python -m calc` | `io.StringIO` とサブプロセス | 9.4・9.5 の表はサブプロセスで実行。細かい分岐は `main()` に `StringIO` を渡して速く確かめる |
 | `tests/test_web.py` | `calc.web` | Flask のテストクライアント | 12.3〜12.5 の API の応答、セッションの分離と上限、不正なリクエストの扱い |
+| `tests/test_web_ui.py` | Web GUI の画面 | Playwright でヘッドレスのブラウザを操作 | 12.7 の画面の動き（計算・エラーの印・キー操作・変数・履歴・計算の順番・画面の幅）と、コンソールエラーがないこと |
+
+- **画面テストのブラウザ**：インストール済みの Google Chrome を使い、なければ Playwright の Chromium（`uv run playwright install chromium` で入る）を使う。どちらもなければスキップする。フォント（Google Fonts）は取りに行かず、ネットの有無で結果が変わらないようにする。
 
 - **段を切り離す**：evaluator のテストは parser を使わず、ノードを直接組み立てる。parser にバグがあっても evaluator のテストは落ちず、原因の段がすぐ分かる。parser のテストは lexer を使ってよい（lexer は先にテスト済みのため）。
 - **表で書く**：同じ形のケースは `pytest.mark.parametrize` にまとめ、`id` に SPEC の ID（`R-01`、`E-17` など）を付ける。失敗したとき、SPEC のどの項目かがすぐ分かる。
@@ -462,5 +465,7 @@ python -m calc.web [--host HOST] [--port PORT] [--no-browser]
 
 ### 12.8 自動テストの対象外（手で確認する）
 
-- ブラウザで画面が崩れずに表示され、キーパッド・キー操作・変数・履歴が 12.7 のとおりに動くこと
+画面の動きは `tests/test_web_ui.py` で確かめる。次は手で確かめる。
+
+- 見た目（配色・フォント・ボタンの形）が 12.7 のとおりで、崩れていないこと
 - 起動時にブラウザが開くこと
