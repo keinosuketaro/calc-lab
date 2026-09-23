@@ -1,5 +1,7 @@
 """Web GUI（calc.web）のテスト。Flask のテストクライアントで API と画面を確かめる。"""
 
+import sys
+
 import pytest
 from flask.testing import FlaskClient
 
@@ -200,3 +202,14 @@ def test_executeに上限を超える本文を送ると_413を返す(client: Fla
 
 def test_executeにGETでアクセスすると_405を返す(client: FlaskClient) -> None:
     assert client.get("/api/execute").status_code == 405
+
+
+def test_create_appで作ったアプリに4300桁を超える整数の式を送ると_全桁を返す() -> None:
+    # 上限はプロセス全体の設定で、先に動いた CLI のテストが外していることがあるので、既定に戻してから確かめる
+    original = sys.get_int_max_str_digits()
+    sys.set_int_max_str_digits(4300)
+    try:
+        data = execute(create_app().test_client(), "10 ** 5000")
+    finally:
+        sys.set_int_max_str_digits(original)
+    assert data["result"] == "1" + "0" * 5000

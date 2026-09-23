@@ -97,6 +97,8 @@ class SessionStore:
 
 def create_app(store: SessionStore | None = None) -> Flask:
     """Flask アプリを作る。store を省くと新しい SessionStore を使う。"""
+    # 結果を str() で返すので、int は桁数に上限なく文字列にできるようにする（SPEC 3章）
+    sys.set_int_max_str_digits(0)
     store = store or SessionStore()
     app = Flask(__name__)
     app.config["MAX_CONTENT_LENGTH"] = MAX_BODY_BYTES
@@ -137,7 +139,6 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--no-browser", action="store_true", help="ブラウザを開かない")
     args = parser.parse_args(argv)
 
-    sys.set_int_max_str_digits(0)
     url = f"http://{args.host}:{args.port}/"
     if not args.no_browser:
         threading.Timer(1.0, webbrowser.open, args=(url,)).start()
