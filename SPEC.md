@@ -252,7 +252,7 @@ stdin は端末ではないので、プロンプトは出ない。
 
 | ID | 内容 |
 |---|---|
-| S-01 | `src/calc/` 以下の全 `.py` を `ast` で解析し、`eval` / `exec` / `compile` / `__import__` の呼び出しがないこと |
+| S-01 | `src/calc/` 以下の全 `.py` を `ast` で解析し、組み込み関数 `eval` / `exec` / `compile` / `__import__` の呼び出し（`eval(...)` や `builtins.eval(...)` の形）がないこと。`re.compile(...)` など他モジュールの関数は対象外 |
 | S-02 | `Calculator().execute("__import__('os')")` が `CalcError` の子クラスを送出すること（`'` は使えない文字） |
 
 ### 9.7 自動テストの対象外（手で確認する）
@@ -348,4 +348,4 @@ Node = Number | Name | UnaryOp | BinOp | Assign
 - **表で書く**：同じ形のケースは `pytest.mark.parametrize` にまとめ、`id` に SPEC の ID（`R-01`、`E-17` など）を付ける。失敗したとき、SPEC のどの項目かがすぐ分かる。
 - **例外の確かめ方**：`pytest.raises(クラス)` で種類を確かめ、そのあと `message` と `position` を `==` で比べる（`match=` の正規表現は使わない。`'('` などの記号がエスケープ漏れを起こしやすいため）。
 - **テストを先に書く**：実装より先に、段ごとのテストを lexer → parser → evaluator → calculator → cli の順に書く。実装も同じ順に進め、各段のテストが通ってから次の段に進む。
-- **サブプロセスのテストは最小限にする**：起動が遅いので、9.4・9.5 の表と S-01 に限る。
+- **サブプロセスのテストは最小限にする**：起動が遅いので、9.4・9.5 の表に限る。
